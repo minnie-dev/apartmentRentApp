@@ -1,11 +1,14 @@
 package com.restapi.practicerestapi
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
 import com.restapi.practicerestapi.databinding.ActivityMainBinding
+import io.reactivex.schedulers.Schedulers
 
 
 class MainActivity : AppCompatActivity() , OnMapReadyCallback {
@@ -23,6 +26,22 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback {
         binding.mapView.getMapAsync(this)
         NaverMapSdk.getInstance(this).client=
             NaverMapSdk.NaverCloudPlatformClient(BuildConfig.NAVER_CLIENT_ID)
+
+        getTour()
+    }
+
+    @SuppressLint("CheckResult")
+    fun getTour(){
+        RetrofitObject.getApiService().getInfo(10,1,
+            "ETC","AppTest","A",
+            15,126.981611,37.568477, 1000,"Y")
+            .observeOn(Schedulers.io())
+            .subscribeOn(Schedulers.io())
+            .subscribe({
+                Log.d("투어", it.body.toString())
+            }, {
+                Log.d("투어 실패", it.toString())
+            })
     }
 
     override fun onStart() {
