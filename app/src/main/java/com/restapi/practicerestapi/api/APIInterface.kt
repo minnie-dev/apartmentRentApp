@@ -19,7 +19,6 @@ interface APIInterface {
         @Query("mapY") mapY: Double,
         @Query("radius") radius: Int,
         @Query("listYN") listYN: String,
-        @Query("modifiedtime") modifiedtime: Int = 20200101,
         @Query("ServiceKey") ServiceKey: String = BuildConfig.API_KEY
     ): Single<LocationDTO>
 

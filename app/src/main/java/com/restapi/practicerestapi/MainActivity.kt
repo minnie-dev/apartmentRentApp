@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback {
     @SuppressLint("CheckResult")
     fun getTour(){
         RetrofitObject.getApiService().getInfo(10,1,
-            "ETC","AppTest","A",
+            "AND","PracticeRestApi","S",
             15,126.981611,37.568477, 1000,"Y")
             .observeOn(Schedulers.io())
             .subscribeOn(Schedulers.io())
