@@ -1,4 +1,4 @@
-package com.housepriceapp.houseprice.pratice
+package com.housepriceapp.houseprice.practice.retrofit
 
 import com.housepriceapp.houseprice.BuildConfig
 import io.reactivex.Single

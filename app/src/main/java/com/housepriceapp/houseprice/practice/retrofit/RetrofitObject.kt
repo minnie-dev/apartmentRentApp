@@ -1,4 +1,4 @@
-package com.housepriceapp.houseprice.pratice
+package com.housepriceapp.houseprice.practice.retrofit
 
 import com.tickaroo.tikxml.TikXml
 import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory

@@ -1,27 +1,24 @@
-package com.housepriceapp.houseprice
+package com.housepriceapp.houseprice.practice
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.housepriceapp.houseprice.data.RetrofitObject
+import com.housepriceapp.houseprice.BuildConfig
+import com.housepriceapp.houseprice.databinding.ActivityMainBinding
+import com.housepriceapp.houseprice.practice.retrofit.RetrofitObject
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
-import com.housepriceapp.houseprice.databinding.ActivityMainBinding
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
-//원하는 위치 반경내에 있는 가장 저렴한 동네
-
-
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class PracticeActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var naverMap: NaverMap
@@ -38,83 +35,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         NaverMapSdk.getInstance(this).client =
             NaverMapSdk.NaverCloudPlatformClient(BuildConfig.NAVER_CLIENT_ID)
 
-        getRent()
+        getTour(126.981611, 37.568477)
+
+
     }
 
     @SuppressLint("CheckResult")
-    fun getRent(){
-        RetrofitObject.getApiService().getInfo(11110,202012,"xml")
-            .observeOn(AndroidSchedulers.mainThread())
+    fun getTour(gpsXlng : Double , gpsYlat: Double) {
+        RetrofitObject.getApiService().getInfo(
+            10, 1,
+            "AND", "HousePrice", "S",
+            15, gpsXlng, gpsYlat, 1000, "Y"
+        )
+            .observeOn(Schedulers.io())
             .subscribeOn(Schedulers.io())
             .subscribe({
-                Log.d("렌트",it.body.toString())
-            },{
-                Log.d("렌트 실패",it.toString())
+                Log.d("투어", it.body?.items.toString())
+            }, {
+                Log.d("투어 실패", it.toString())
             })
     }
-
-
-    override fun onMapReady(map: NaverMap) {
-        naverMap = map
-        naverMap.maxZoom = 18.0
-        naverMap.minZoom = 10.0
-
-        val cameraUpdate = CameraUpdate.scrollTo(LatLng(37.58490707916565, 126.88572629175184))
-        naverMap.moveCamera(cameraUpdate)
-
-        val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = true
-
-        locationSource = FusedLocationSource(this@MainActivity, LOCATION_PERMISSION_REQUEST_CODE)
-        naverMap.locationSource = locationSource
-
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-
-        var currentLocation: Location?
-        fusedLocationClient =
-            LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                Log.d("투어", "들어오나")
-                currentLocation = location
-                naverMap.locationOverlay.run {
-                    isVisible = true
-                    position = LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
-                }
-                val cameraUpdate = CameraUpdate.scrollTo(
-                    LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
-                )
-                naverMap.moveCamera(cameraUpdate)
-            }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
-            return
-        }
-        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            if (!locationSource.isActivated) {
-                naverMap.locationTrackingMode = LocationTrackingMode.Follow
-            }
-            return
-        }
-    }
-
 
     override fun onStart() {
         super.onStart()
@@ -151,6 +91,69 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.mapView.onLowMemory()
     }
 
+    override fun onMapReady(map: NaverMap) {
+        naverMap = map
+        naverMap.maxZoom = 18.0
+        naverMap.minZoom = 10.0
+
+        val cameraUpdate = CameraUpdate.scrollTo(LatLng(37.58490707916565, 126.88572629175184))
+        naverMap.moveCamera(cameraUpdate)
+
+        val uiSettings = naverMap.uiSettings
+        uiSettings.isLocationButtonEnabled = true
+
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+        naverMap.locationSource = locationSource
+
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        var currentLocation: Location?
+        fusedLocationClient =
+            LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                currentLocation = location
+                naverMap.locationOverlay.run {
+                    isVisible = true
+                    position = LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
+                }
+                val cameraUpdate = CameraUpdate.scrollTo(
+                    LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
+                )
+                naverMap.moveCamera(cameraUpdate)
+            }
+        /*naverMap.addOnLocationChangeListener {
+            getTour(it.longitude,it.latitude)
+        }*/
+
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
+            return
+        }
+        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
+            if (!locationSource.isActivated) {
+                naverMap.locationTrackingMode = LocationTrackingMode.Follow
+            }
+            return
+        }
+    }
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1004
