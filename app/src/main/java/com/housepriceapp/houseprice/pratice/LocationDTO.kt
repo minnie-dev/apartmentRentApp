@@ -1,4 +1,4 @@
-package com.restapi.practicerestapi
+package com.housepriceapp.houseprice.pratice
 
 import com.tickaroo.tikxml.annotation.*
 
@@ -21,7 +21,7 @@ data class Header(
 @Xml(name="body")
 data class Body(
     @Element
-    val items: List<Item>?, // 현황 데이터
+    val items: Items?, // 현황 데이터
     @PropertyElement
     val numOfRows : String?, // 한 페이지 결과 수
     @PropertyElement
@@ -30,7 +30,14 @@ data class Body(
     val totalCount : String? // 전체 결과 수
 )
 
-@Xml(name="item")
+@Xml(name = "items")
+data class Items(
+    @Element(name = "item")
+    val item:List<Item> // 세부항목
+)
+
+
+@Xml
 data class Item(
     @PropertyElement
     val addr1:String?, // 주소
@@ -38,8 +45,8 @@ data class Item(
     val addr2:String?, // 상세주소
     @PropertyElement
     val areacode:String?, // 지역코드
-/*    @PropertyElement
-    val booktour:Int?, // 교과서 속 여행지 여부*/
+    @PropertyElement
+    val booktour:String?, // 교과서 속 여행지 여부
     @PropertyElement
     val cat1:String?, // 대분류
     @PropertyElement

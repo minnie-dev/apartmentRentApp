@@ -1,6 +1,5 @@
-package com.restapi.practicerestapi
+package com.housepriceapp.houseprice.pratice
 
-import com.restapi.practicerestapi.api.APIInterface
 import com.tickaroo.tikxml.TikXml
 import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory
 import okhttp3.OkHttpClient

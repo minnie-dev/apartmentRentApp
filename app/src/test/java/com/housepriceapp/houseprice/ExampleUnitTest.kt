@@ -1,4 +1,4 @@
-package com.restapi.practicerestapi
+package com.housepriceapp.houseprice
 
 import org.junit.Test
 

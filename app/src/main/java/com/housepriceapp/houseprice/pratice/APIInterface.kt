@@ -1,7 +1,6 @@
-package com.restapi.practicerestapi.api
+package com.housepriceapp.houseprice.pratice
 
-import com.restapi.practicerestapi.BuildConfig
-import com.restapi.practicerestapi.LocationDTO
+import com.housepriceapp.houseprice.BuildConfig
 import io.reactivex.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
