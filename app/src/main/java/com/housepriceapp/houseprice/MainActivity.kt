@@ -47,9 +47,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .subscribe({
-                Log.d("렌트",it.body.toString())
+                Log.d("success",it.body.toString())
             },{
-                Log.d("렌트 실패",it.toString())
+                Log.d("fail",it.toString())
             })
     }
 
