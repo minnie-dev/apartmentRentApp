@@ -3,6 +3,7 @@ package com.housepriceapp.houseprice
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,8 +16,13 @@ import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
 import com.housepriceapp.houseprice.databinding.ActivityMainBinding
+import com.housepriceapp.houseprice.room.LegalDongCode
+import com.housepriceapp.houseprice.room.LegalDongDB
+import io.reactivex.Flowable
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import java.io.InputStream
 
 //원하는 위치 반경내에 있는 가장 저렴한 동네
 
@@ -39,17 +45,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             NaverMapSdk.NaverCloudPlatformClient(BuildConfig.NAVER_CLIENT_ID)
 
         getRent()
+        legalCodeDB()
+    }
+
+    fun legalCodeDB() {
+        val assetManager: AssetManager = resources.assets
+        val inputStream: InputStream = assetManager.open("legaldongCode.txt")
+        val legalDB = LegalDongDB.getInstance(this)
+
+        inputStream.bufferedReader().readLines().forEachIndexed { idx, legaldong ->
+            var token = legaldong.split("\t")
+            Log.d("file_test", token.toString())
+            legalDB!!.legalDongDao().insert(LegalDongCode(idx, token[1], token[0].toInt()))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe()
+        }
     }
 
     @SuppressLint("CheckResult")
-    fun getRent(){
-        RetrofitObject.getApiService().getInfo(11110,202012,"xml")
+    fun getRent() {
+        RetrofitObject.getApiService().getInfo(11110, 202012, "xml")
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .subscribe({
-                Log.d("success",it.body.toString())
-            },{
-                Log.d("fail",it.toString())
+                Log.d("success", it.body.toString())
+            }, {
+                Log.d("fail", it.toString())
             })
     }
 
@@ -89,10 +111,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 currentLocation = location
                 naverMap.locationOverlay.run {
                     isVisible = true
-                    position = LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
+                    position = LatLng(currentLocation!!.latitude, currentLocation!!.longitude)
                 }
                 val cameraUpdate = CameraUpdate.scrollTo(
-                    LatLng(currentLocation!!.latitude,currentLocation!!.longitude)
+                    LatLng(currentLocation!!.latitude, currentLocation!!.longitude)
                 )
                 naverMap.moveCamera(cameraUpdate)
             }
