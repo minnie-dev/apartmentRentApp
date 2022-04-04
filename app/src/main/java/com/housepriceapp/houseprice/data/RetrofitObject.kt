@@ -25,7 +25,7 @@ object RetrofitObject {
             .baseUrl("http://openapi.molit.go.kr:8081/OpenAPI_ToolInstallPackage/service/rest/")
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(TikXmlConverterFactory.create(TikXml.Builder().exceptionOnUnreadXml(false).build()))
-            .client(client)
+            //.client(client)
             .build()
     }
 

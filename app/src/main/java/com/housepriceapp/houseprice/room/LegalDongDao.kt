@@ -12,6 +12,9 @@ interface LegalDongDao {
     @Query("SELECT * FROM legalDongCode")
     fun getAll() : Flowable<List<LegalDongCode>>
 
+    @Query("SELECT * FROM legalDongCode WHERE legalDong = :idxCode")
+    fun getNameSearch(idxCode : String) : LegalDongCode
+
     @Insert (onConflict = OnConflictStrategy.REPLACE)
     fun insert(legalCode : LegalDongCode) : Completable
 }

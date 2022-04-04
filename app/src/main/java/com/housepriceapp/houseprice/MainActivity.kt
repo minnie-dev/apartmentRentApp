@@ -8,9 +8,12 @@ import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.housepriceapp.houseprice.data.Item
 import com.housepriceapp.houseprice.data.RetrofitObject
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -18,163 +21,95 @@ import com.naver.maps.map.util.FusedLocationSource
 import com.housepriceapp.houseprice.databinding.ActivityMainBinding
 import com.housepriceapp.houseprice.room.LegalDongCode
 import com.housepriceapp.houseprice.room.LegalDongDB
-import io.reactivex.Flowable
-import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.io.InputStream
 
-//원하는 위치 반경내에 있는 가장 저렴한 동네
-
-
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var naverMap: NaverMap
-    private lateinit var locationSource: FusedLocationSource
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var codeAdapter: LegalDongCodeAdapter
+
+    var legalDongCodeList: List<LegalDongCode>? = null
+    var houseInfoList: List<Item>? = null
+    lateinit var legalDB: LegalDongDB
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.mapView.onCreate(savedInstanceState)
-        binding.mapView.getMapAsync(this)
-        NaverMapSdk.getInstance(this).client =
-            NaverMapSdk.NaverCloudPlatformClient(BuildConfig.NAVER_CLIENT_ID)
+        legalDB = LegalDongDB.getInstance(this)!!
 
-        getRent()
-        legalCodeDB()
-    }
-
-    fun legalCodeDB() {
-        val assetManager: AssetManager = resources.assets
-        val inputStream: InputStream = assetManager.open("legaldongCode.txt")
-        val legalDB = LegalDongDB.getInstance(this)
-
-        inputStream.bufferedReader().readLines().forEachIndexed { idx, legaldong ->
-            var token = legaldong.split("\t")
-            Log.d("file_test", token.toString())
-            legalDB!!.legalDongDao().insert(LegalDongCode(idx, token[1], token[0].toInt()))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe()
-        }
+        // db에 저장되어있는 법정동 코드 리스트에 추가
+        setLegalDongList()
     }
 
     @SuppressLint("CheckResult")
-    fun getRent() {
-        RetrofitObject.getApiService().getInfo(11110, 202012, "xml")
+    fun setLegalDongList() {
+        legalDB.legalDongDao().getAll()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                if (it.isEmpty()) {
+                    legalCodeDB()
+                }
+
+                if (legalDongCodeList == null) {
+                    legalDongCodeList = it
+
+                    codeAdapter = LegalDongCodeAdapter(legalDongCodeList!!)
+
+                    binding.recyclerView.apply {
+                        adapter = codeAdapter
+                        layoutManager = LinearLayoutManager(this@MainActivity)
+                    }
+
+                    // recyclerview item click
+                    codeAdapter.setItemClickListener(object :
+                        LegalDongCodeAdapter.OnItemClickEventListener {
+                        override fun onItemClick(name: String, position: Int) {
+                            val legaldongInfo = legalDB.legalDongDao().getNameSearch(name)
+                            getRent(legaldongInfo.code)
+                        }
+                    })
+
+                }
+            }
+    }
+
+    /* 법정동 코드 DB 저장 */
+    @SuppressLint("CheckResult")
+    fun legalCodeDB() {
+        val assetManager: AssetManager = resources.assets
+        val inputStream: InputStream = assetManager.open("legaldongCode.txt")
+
+        inputStream.bufferedReader().readLines().forEachIndexed { idx, list ->
+            val legaldong = list.split("\t")
+            legalDB.legalDongDao().insert(LegalDongCode(idx, legaldong[1], legaldong[0].toInt()))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { println("db save") }
+        }
+    }
+
+    /*서버에서 아파트 전월세 데이터 받아오기*/
+    @SuppressLint("CheckResult")
+    fun getRent(code: Int) {
+        RetrofitObject.getApiService().getInfo(code, 202201, "xml")
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .subscribe({
+                houseInfoList = it.body.items.item
+                val listFragment = HouseInfoFragment(houseInfoList!!)
+                supportFragmentManager.beginTransaction()
+                    .replace(binding.fragmentContainer.id, listFragment)
+                    .commit()
+                binding.recyclerView.visibility = View.GONE
                 Log.d("success", it.body.toString())
             }, {
                 Log.d("fail", it.toString())
             })
     }
 
-
-    override fun onMapReady(map: NaverMap) {
-        naverMap = map
-        naverMap.maxZoom = 18.0
-        naverMap.minZoom = 10.0
-
-        val cameraUpdate = CameraUpdate.scrollTo(LatLng(37.58490707916565, 126.88572629175184))
-        naverMap.moveCamera(cameraUpdate)
-
-        val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = true
-
-        locationSource = FusedLocationSource(this@MainActivity, LOCATION_PERMISSION_REQUEST_CODE)
-        naverMap.locationSource = locationSource
-
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-
-        var currentLocation: Location?
-        fusedLocationClient =
-            LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                Log.d("투어", "들어오나")
-                currentLocation = location
-                naverMap.locationOverlay.run {
-                    isVisible = true
-                    position = LatLng(currentLocation!!.latitude, currentLocation!!.longitude)
-                }
-                val cameraUpdate = CameraUpdate.scrollTo(
-                    LatLng(currentLocation!!.latitude, currentLocation!!.longitude)
-                )
-                naverMap.moveCamera(cameraUpdate)
-            }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
-            return
-        }
-        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            if (!locationSource.isActivated) {
-                naverMap.locationTrackingMode = LocationTrackingMode.Follow
-            }
-            return
-        }
-    }
-
-
-    override fun onStart() {
-        super.onStart()
-        binding.mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.mapView.onPause()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        binding.mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        binding.mapView.onStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.mapView.onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        binding.mapView.onLowMemory()
-    }
-
-
-    companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1004
-    }
 }

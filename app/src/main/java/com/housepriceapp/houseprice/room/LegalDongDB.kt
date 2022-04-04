@@ -18,7 +18,7 @@ abstract class LegalDongDB : RoomDatabase() {
                         context.applicationContext,
                         LegalDongDB::class.java, "legalDongCode.db")
                         .fallbackToDestructiveMigration()
-                        .allowMainThreadQueries() // Todo 추후 비동기로 작업할 때 삭제
+                        .allowMainThreadQueries()
                         .build()
                 }
             }
