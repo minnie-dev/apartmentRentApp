@@ -1,23 +1,14 @@
 package com.housepriceapp.houseprice
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.content.res.AssetManager
-import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.housepriceapp.houseprice.data.Item
 import com.housepriceapp.houseprice.data.RetrofitObject
-import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.*
-import com.naver.maps.map.util.FusedLocationSource
 import com.housepriceapp.houseprice.databinding.ActivityMainBinding
 import com.housepriceapp.houseprice.room.LegalDongCode
 import com.housepriceapp.houseprice.room.LegalDongDB
