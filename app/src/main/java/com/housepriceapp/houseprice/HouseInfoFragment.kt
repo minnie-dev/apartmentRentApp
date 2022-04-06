@@ -15,9 +15,12 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.housepriceapp.houseprice.data.Item
 import com.housepriceapp.houseprice.databinding.FragmentHousepriceBinding
+import com.housepriceapp.houseprice.search.SearchObject
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
 class HouseInfoFragment(var houseInfoList: List<Item>) : Fragment(), OnMapReadyCallback {
     lateinit var binding: FragmentHousepriceBinding
@@ -46,8 +49,16 @@ class HouseInfoFragment(var houseInfoList: List<Item>) : Fragment(), OnMapReadyC
         binding.mapView.onCreate(savedInstanceState)
         binding.mapView.getMapAsync(this)
 
+        placeSearch(houseInfoList[0].apart)
 
         return binding.root
+    }
+
+    fun placeSearch(place: String) {
+        SearchObject.getApiService().getSearch(BuildConfig.KAKAO_KEY, place)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe()
     }
 
     override fun onMapReady(map: NaverMap) {

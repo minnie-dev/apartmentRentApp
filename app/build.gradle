@@ -22,6 +22,8 @@ android {
 
         buildConfigField "String","NAVER_CLIENT_ID",properties['naver_client_id']
         buildConfigField "String","API_KEY",properties['api.key']
+        buildConfigField "String","KAKAO_KEY",properties['kakao.api.key']
+
 
         manifestPlaceholders = [NAVER_CLIENT_ID: naver_client_id]
 
