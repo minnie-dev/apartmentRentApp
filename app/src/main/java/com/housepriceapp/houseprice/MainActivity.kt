@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
     /*서버에서 아파트 전월세 데이터 받아오기*/
     @SuppressLint("CheckResult")
     fun getRent(code: Int) {
-        RetrofitObject.getApiService().getInfo(code, 202201, "xml")
+        RetrofitObject.getApiService().getInfo(code, 202204, "xml")
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .subscribe({

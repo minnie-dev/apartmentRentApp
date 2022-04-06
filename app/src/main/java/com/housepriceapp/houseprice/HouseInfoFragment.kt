@@ -1,6 +1,7 @@
 package com.housepriceapp.houseprice
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -30,6 +31,8 @@ class HouseInfoFragment(var houseInfoList: List<Item>) : Fragment(), OnMapReadyC
     private lateinit var locationSource: FusedLocationSource
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    private var houseLocationList : MutableList<String>? =null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -49,16 +52,29 @@ class HouseInfoFragment(var houseInfoList: List<Item>) : Fragment(), OnMapReadyC
         binding.mapView.onCreate(savedInstanceState)
         binding.mapView.getMapAsync(this)
 
-        placeSearch(houseInfoList[0].apart)
+        houseInfoList.forEach {
+            println("아파트 검색 " + it.apart)
+            placeSearch(it.apart)
+        }
 
         return binding.root
     }
 
+    @SuppressLint("CheckResult")
     fun placeSearch(place: String) {
         SearchObject.getApiService().getSearch(BuildConfig.KAKAO_KEY, place)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
-            .subscribe()
+            .subscribe({
+                for(idx in it.documents.indices){
+                    if(it.documents[idx].category_name.endsWith("아파트")){
+                        houseLocationList?.add(it.documents[idx].place_name)
+                        println("아파트 결과 " + it.documents[idx].place_name)
+                    }
+                }
+            },{
+
+            })
     }
 
     override fun onMapReady(map: NaverMap) {
